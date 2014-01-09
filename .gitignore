@@ -1,0 +1,9 @@
+build/
+dist/
+.DS_Store
+/CodeNameOne/NLWMobile/nbproject/private/
+/CodeNameOne/WallBoard/nbproject/private/
+/NaijaLyricsWikiMobile/nbproject/private/
+/NLWMobileWeb/nbproject/private/
+/NaijaLyricsDevelopers/nbproject/private/
+/NaijaLyricsStats/nbproject/private/
