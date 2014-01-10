@@ -29,8 +29,7 @@ import za.co.axon.monitor.utils.Mailer;
  */
 public class Initializer {
 
-    public JSONObject config = null;
-    public Mailer mailer;
+    public JSONObject config = null;    
     public SMPPSession session;
     public ExecutorService execService;
     public MonitorSystem system = new MonitorSystem();
@@ -148,7 +147,7 @@ public class Initializer {
     }    
 
     public void initMailServer() throws JSONException {
-        mailer = new Mailer(system);
+        system.mailer = new Mailer(system);
     }
 
     public void initSMSC() throws JSONException, IOException {

@@ -11,9 +11,6 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.json.JSONException;
-import org.json.JSONObject;
-import za.co.axon.monitor.Initializer;
 import za.co.axon.monitor.config.MonitorSystem;
 
 /**
@@ -42,13 +39,20 @@ public class MemoryMonitor {
                         if (condition.endsWith("%")) {
                             long percent = getFreeMemoryPercent(new StringTokenizer(freeOutput, ","));
                             String valuString = condition.substring(3).replace("%", "").trim();
-                            long value = Long.parseLong(valuString);
+                            long conditionValue = Long.parseLong(valuString);
+                            System.out.println("FREE: VALUEC: " + conditionValue + ", PERC: " + percent + ", COMM: " + command);
                             if (command.equals("lt")) {
-                                doMemoryLessThan(value, percent, "free");
+                                if (conditionValue > percent) {
+                                    sendMailAlert(system, conditionValue, percent, "free", "below");
+                                }
                             } else if (command.equals("gt")) {
-                                doMemoryGreaterThan(value, percent, "free");
-                            } else {
-                                doMemoryEqualTo(value, percent, "free");
+                                if (conditionValue < percent) {
+                                    sendMailAlert(system, conditionValue, percent, "free", "above");
+                                }
+                            } else if (command.equals("eq")) {
+                                if (conditionValue == percent) {
+                                    sendMailAlert(system, conditionValue, percent, "free", "equal");
+                                }
                             }
                         }
                     }
@@ -59,13 +63,19 @@ public class MemoryMonitor {
                         if (condition.endsWith("%")) {
                             long percent = getUsedMemoryPercent(new StringTokenizer(freeOutput, ","));
                             String valuString = condition.substring(3).replace("%", "").trim();
-                            long value = Long.parseLong(valuString);
+                            long conditonValue = Long.parseLong(valuString);
                             if (command.equals("lt")) {
-                                doMemoryLessThan(value, percent, "used");
+                                if (conditonValue > percent) {
+                                    sendMailAlert(system, conditonValue, percent, "used", "below");
+                                }
                             } else if (command.equals("gt")) {
-                                doMemoryGreaterThan(value, percent, "used");
+                                if (conditonValue < percent) {
+                                    sendMailAlert(system, conditonValue, percent, "used", "above");
+                                }
                             } else {
-                                doMemoryEqualTo(value, percent, "used");
+                                if (conditonValue == percent) {
+                                    sendMailAlert(system, conditonValue, percent, "used", "equal");
+                                }
                             }
                         }
                     }
@@ -80,13 +90,25 @@ public class MemoryMonitor {
         });
     }
 
-    private void doMemoryGreaterThan(long value, long percent, String type) {
-    }
+    private void sendMailAlert(MonitorSystem system, long conditionValue, long percent, String type, String conditionalMessage) {
+        if (!system.alerts.emails.isEmpty()) {
+            if (system.mailServer.host != null) {
+                String header = "Alert On " + system.systemName + " - " + system.ipAddress;
+                String message = type + " memory is " + conditionalMessage + " " + conditionValue + "%. <br />"
+                        + "Memory is now at " + percent + "%";
+                String htmlMessage = system.mailer.contructHTMLMessage(message, header);
+                String rcpts = "";
+                for (String email : system.alerts.emails) {
+                    rcpts += email + ",";
+                }
 
-    private void doMemoryLessThan(long value, long percent, String type) {
-    }
+                rcpts = rcpts.substring(0, rcpts.lastIndexOf(","));
+                system.mailer.sendMail("Axon Alerts", system.mailServer.user, rcpts, htmlMessage, "Alert On " + system.systemName);
+            }
+        }
 
-    private void doMemoryEqualTo(long value, long percen, String typet) {
+        if (!system.alerts.phoneNumbers.isEmpty()) {
+        }
     }
 
     private long getFreeMemoryPercent(StringTokenizer freeTokens) {
