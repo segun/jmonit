@@ -4,6 +4,7 @@
  */
 package za.co.axon.monitor.config;
 
+import org.jsmpp.session.SMPPSession;
 import za.co.axon.monitor.utils.Mailer;
 
 /**
@@ -20,6 +21,7 @@ public class MonitorSystem {
     
     
     public Mailer mailer;
+    public SMPPSession session;
     
     public enum ACTION {
         ALERT_EMAIL, ALERT_SMS, RESTART, ALERT_ALL
