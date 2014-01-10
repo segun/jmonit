@@ -11,6 +11,7 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import za.co.axon.monitor.SystemMonitor;
 import za.co.axon.monitor.config.MonitorSystem;
 
 /**
@@ -26,7 +27,8 @@ public class MemoryMonitor {
     }
 
     public void createMemoryThread(final MonitorSystem system) throws IOException {
-        //"total,used,free"        
+        //"total,used,free"     
+        SystemMonitor.LOGGER.log(Level.INFO, "Creating Memory Monitor Thread");
         Process memoryProcess = Runtime.getRuntime().exec("/data/etc/monitor/scripts/free");
         BufferedReader freeProcessReader = new BufferedReader(new InputStreamReader(memoryProcess.getInputStream()));
         final String freeOutput = freeProcessReader.readLine();
@@ -39,8 +41,7 @@ public class MemoryMonitor {
                         if (condition.endsWith("%")) {
                             long percent = getFreeMemoryPercent(new StringTokenizer(freeOutput, ","));
                             String valuString = condition.substring(3).replace("%", "").trim();
-                            long conditionValue = Long.parseLong(valuString);
-                            System.out.println("FREE: VALUEC: " + conditionValue + ", PERC: " + percent + ", COMM: " + command);
+                            long conditionValue = Long.parseLong(valuString);                            
                             if (command.equals("lt")) {
                                 if (conditionValue > percent) {
                                     sendMailAlert(system, conditionValue, percent, "free", "below");
@@ -91,6 +92,7 @@ public class MemoryMonitor {
     }
 
     private void sendMailAlert(MonitorSystem system, long conditionValue, long percent, String type, String conditionalMessage) {
+        SystemMonitor.LOGGER.log(Level.INFO, "Sending Email Alert");
         if (!system.alerts.emails.isEmpty()) {
             if (system.mailServer.host != null) {
                 String header = "Alert On " + system.systemName + " - " + system.ipAddress;
@@ -101,13 +103,12 @@ public class MemoryMonitor {
                 for (String email : system.alerts.emails) {
                     rcpts += email + ",";
                 }
-
+                
                 rcpts = rcpts.substring(0, rcpts.lastIndexOf(","));
+                
+                SystemMonitor.LOGGER.log(Level.INFO, "Recipients: {0}", new Object[]{rcpts});
                 system.mailer.sendMail("Axon Alerts", system.mailServer.user, rcpts, htmlMessage, "Alert On " + system.systemName);
             }
-        }
-
-        if (!system.alerts.phoneNumbers.isEmpty()) {
         }
     }
 
@@ -117,7 +118,7 @@ public class MemoryMonitor {
         long free = Long.parseLong(freeTokens.nextToken());
 
         long perc = Math.round(((double) free / (double) total) * 100);
-        System.out.println("FREE PERC: " + perc);
+        SystemMonitor.LOGGER.log(Level.INFO, "Free Memory Percentage: {0}", perc);
         return perc;
     }
 
@@ -127,7 +128,7 @@ public class MemoryMonitor {
         long free = Long.parseLong(freeTokens.nextToken());
 
         long perc = Math.round(((double) used / (double) total) * 100);
-        System.out.println("USED PERC: " + perc);
+        SystemMonitor.LOGGER.log(Level.INFO, "Used Memory Percentage: {0}", perc);
         return perc;
     }
 }

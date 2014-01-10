@@ -11,6 +11,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 import org.jsmpp.bean.BindType;
 import org.jsmpp.bean.NumberingPlanIndicator;
 import org.jsmpp.bean.TypeOfNumber;
@@ -37,7 +38,8 @@ public class Initializer {
     public void initConfig() throws JSONException, FileNotFoundException, IOException {
         execService = Executors.newCachedThreadPool();
 
-        String configPath = "/data/etc/monitor/config.json";
+        String configPath = "/data/etc/monitor/config.json";        
+        SystemMonitor.LOGGER.log(Level.INFO, "Reading Config File");
         File configFile = new File(configPath);
         String jsonContent = "";
         StringBuilder buffer = new StringBuilder();
@@ -45,12 +47,16 @@ public class Initializer {
         while ((jsonContent = reader.readLine()) != null) {
             buffer.append(jsonContent);
         }
+        SystemMonitor.LOGGER.log(Level.INFO, "Config File Read Successfully");
         JSONObject object = new JSONObject(buffer.toString());
+        
+        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up System");
         config = object.getJSONObject("system");
        
         system.systemName = config.getString("system_name");
         system.ipAddress = config.getString("ip_address");
                 
+        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Alerts");
         JSONArray emails = config.getJSONObject("alerts").getJSONArray("mail");
         for (int i = 0; i < emails.length(); i++) {
             system.alerts.emails.add(emails.getString(i));
@@ -60,7 +66,8 @@ public class Initializer {
         for (int i = 0; i < phones.length(); i++) {
             system.alerts.phoneNumbers.add(phones.getString(i));
         }
-                
+        
+        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Mail Server");        
         JSONObject mailServer = config.getJSONObject("mail_server");
         system.mailServer.host = mailServer.getString("host");
         system.mailServer.password = mailServer.getString("password");
@@ -69,6 +76,7 @@ public class Initializer {
         system.mailServer.useAuth = mailServer.getBoolean("use_auth");
         system.mailServer.user = mailServer.getString("user");
         
+        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up SMSC");
         JSONObject smsc = config.getJSONObject("smsc");
         system.smsc.ipAddress = smsc.getString("ip_address");
         system.smsc.port = smsc.getInt("port");
@@ -76,6 +84,7 @@ public class Initializer {
         system.smsc.password = smsc.getString("password");
         system.smsc.systemType = smsc.getString("system_type");        
         
+        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up CPU Monitor");
         JSONObject loadavg = config.getJSONObject("monitor").getJSONObject("cpu").getJSONObject("load_avg");                
         JSONArray loadAVGAction = config.getJSONObject("monitor").getJSONObject("cpu").getJSONObject("load_avg").getJSONArray("action");
         for(int i = 0; i < loadAVGAction.length(); i++) {
@@ -85,6 +94,7 @@ public class Initializer {
         system.monitor.cpu.loadAVG.condition = loadavg.getString("condition");
         system.monitor.cpu.loadAVG.pingInterval = loadavg.getLong("ping_interval");
         
+        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Memory Monitor");
         JSONObject memory = config.getJSONObject("monitor").getJSONObject("memory");
         system.monitor.memory.pingInterval = memory.getLong("ping_interval");
         
@@ -104,6 +114,7 @@ public class Initializer {
         
         system.monitor.memory.used.condition = used.getString("condition");                
         
+        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Process Monitor");
         JSONObject process = config.getJSONObject("monitor").getJSONObject("process");  
         JSONArray processAction = config.getJSONObject("monitor").getJSONObject("process").getJSONArray("action");
         for(int i = 0; i < processAction.length(); i++) {
@@ -116,6 +127,7 @@ public class Initializer {
         system.monitor.process.stopScript = process.getString("stop_script");
         system.monitor.process.pingInterval = process.getLong("ping_interval");                
         
+        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Command Output Monitor");
         JSONObject output = config.getJSONObject("monitor").getJSONObject("output");  
         JSONArray outputAction = config.getJSONObject("monitor").getJSONObject("output").getJSONArray("action");
         for(int i = 0; i < outputAction.length(); i++) {
@@ -126,7 +138,7 @@ public class Initializer {
         system.monitor.output.expected = output.getString("expected");
         system.monitor.output.pingInterval = output.getLong("ping_interval");                        
         
-        
+        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Port Monitor");
         JSONObject port = config.getJSONObject("monitor").getJSONObject("port");  
         JSONArray portAction = config.getJSONObject("monitor").getJSONObject("port").getJSONArray("action");
         for(int i = 0; i < portAction.length(); i++) {
@@ -136,6 +148,7 @@ public class Initializer {
         system.monitor.port.number = port.getInt("number");
         system.monitor.port.pingInterval = port.getLong("ping_interval");                        
         
+        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up URL Monitor");
         JSONObject web = config.getJSONObject("monitor").getJSONObject("web");  
         JSONArray webAction = config.getJSONObject("monitor").getJSONObject("web").getJSONArray("action");
         for(int i = 0; i < webAction.length(); i++) {
@@ -147,10 +160,12 @@ public class Initializer {
     }    
 
     public void initMailServer() throws JSONException {
+        SystemMonitor.LOGGER.log(Level.INFO, "Initializing Mailer");
         system.mailer = new Mailer(system);
     }
 
     public void initSMSC() throws JSONException, IOException {
+        SystemMonitor.LOGGER.log(Level.INFO, "Initializing SMS Sender");
         session = new SMPPSession();
         String host = system.smsc.ipAddress;
         int port = system.smsc.port;
@@ -159,10 +174,12 @@ public class Initializer {
         String systemType = system.smsc.systemType;
         int timeout = 60000;
         session.connectAndBind(host, port, new BindParameter(BindType.BIND_TX, systemID, password, systemType, TypeOfNumber.UNKNOWN, NumberingPlanIndicator.UNKNOWN, null), timeout);
+        SystemMonitor.LOGGER.log(Level.INFO, "Connected and Bound to SMSC");
         //String messageId = session.submitShortMessage("CMT", TypeOfNumber.INTERNATIONAL, NumberingPlanIndicator.UNKNOWN, "1616", TypeOfNumber.INTERNATIONAL, NumberingPlanIndicator.UNKNOWN, "628176504657", new ESMClass(), (byte) 0, (byte) 1, timeFormatter.format(new Date()), null, registeredDelivery, (byte) 0, DataCodings.ZERO, (byte) 0, "jSMPP simplify SMPP on Java platform".getBytes());
     }
 
-    public void initMonitors() throws JSONException, IOException {        
+    public void initMonitors() throws JSONException, IOException {    
+        SystemMonitor.LOGGER.log(Level.INFO, "Initializing Memory Monitor");
         if (system.monitor.memory.free.condition != null || system.monitor.memory.used.condition != null) {            
             MemoryMonitor memoryMonitor = new MemoryMonitor(execService);
             memoryMonitor.createMemoryThread(system);
