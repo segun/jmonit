@@ -8,7 +8,6 @@ package za.co.axon.monitor.config;
  *
  * @author aardvocate
  */
-public class LoadAVG extends MonitorBase {
-    public String condition;
-    public int timeInterval;
+public class SendOutput extends MonitorBase {
+    public String command;
 }

@@ -21,7 +21,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import za.co.axon.monitor.config.MonitorSystem;
+import za.co.axon.monitor.monitors.CPUMonitor;
 import za.co.axon.monitor.monitors.MemoryMonitor;
+import za.co.axon.monitor.monitors.ProcessMonitor;
 import za.co.axon.monitor.utils.Mailer;
 
 /**
@@ -66,36 +68,44 @@ public class Initializer {
             system.alerts.phoneNumbers.add(phones.getString(i));
         }
 
-        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Mail Server");
-        JSONObject mailServer = config.getJSONObject("mail_server");
-        system.mailServer.host = mailServer.getString("host");
-        system.mailServer.password = mailServer.getString("password");
-        system.mailServer.port = mailServer.getInt("port");
-        system.mailServer.startTLS = mailServer.getBoolean("starttls");
-        system.mailServer.useAuth = mailServer.getBoolean("use_auth");
-        system.mailServer.user = mailServer.getString("user");
-
-        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up SMSC");
-        JSONObject smsc = config.getJSONObject("smsc");
-        system.smsc.ipAddress = smsc.getString("ip_address");
-        system.smsc.port = smsc.getInt("port");
-        system.smsc.systemID = smsc.getString("system_id");
-        system.smsc.password = smsc.getString("password");
-        system.smsc.systemType = smsc.getString("system_type");
-        system.smsc.senderID = smsc.getString("sender_id");
-
-        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up CPU Monitor");
-        JSONObject loadavg = config.getJSONObject("monitor").getJSONObject("cpu").getJSONObject("load_avg");
-        JSONArray loadAVGAction = config.getJSONObject("monitor").getJSONObject("cpu").getJSONObject("load_avg").getJSONArray("action");
-        for (int i = 0; i < loadAVGAction.length(); i++) {
-            system.monitor.cpu.loadAVG.action.add(MonitorSystem.ACTION.valueOf(loadAVGAction.getString(i).toUpperCase()));
+        if (config.has("mail_server")) {
+            SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Mail Server");
+            JSONObject mailServer = config.getJSONObject("mail_server");
+            system.mailServer.host = mailServer.getString("host");
+            system.mailServer.password = mailServer.getString("password");
+            system.mailServer.port = mailServer.getInt("port");
+            system.mailServer.startTLS = mailServer.getBoolean("starttls");
+            system.mailServer.useAuth = mailServer.getBoolean("use_auth");
+            system.mailServer.user = mailServer.getString("user");
         }
 
-        system.monitor.cpu.loadAVG.condition = loadavg.getString("condition");
-        system.monitor.cpu.loadAVG.pingInterval = loadavg.getLong("ping_interval");
+        if (config.has("smsc")) {
+            SystemMonitor.LOGGER.log(Level.INFO, "Filling Up SMSC");
+            JSONObject smsc = config.getJSONObject("smsc");
+            system.smsc.ipAddress = smsc.getString("ip_address");
+            system.smsc.port = smsc.getInt("port");
+            system.smsc.systemID = smsc.getString("system_id");
+            system.smsc.password = smsc.getString("password");
+            system.smsc.systemType = smsc.getString("system_type");
+            system.smsc.senderID = smsc.getString("sender_id");
+        }
 
-        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Memory Monitor");
+        if (config.getJSONObject("monitor").has("cpu")) {
+            SystemMonitor.LOGGER.log(Level.INFO, "Filling Up CPU Monitor");
+            if (config.getJSONObject("monitor").getJSONObject("cpu").has("load_avg")) {
+                JSONObject loadavg = config.getJSONObject("monitor").getJSONObject("cpu").getJSONObject("load_avg");
+                JSONArray loadAVGAction = config.getJSONObject("monitor").getJSONObject("cpu").getJSONObject("load_avg").getJSONArray("action");
+                for (int i = 0; i < loadAVGAction.length(); i++) {
+                    system.monitor.cpu.loadAVG.action.add(MonitorSystem.ACTION.valueOf(loadAVGAction.getString(i).toUpperCase()));
+                }
+                system.monitor.cpu.loadAVG.condition = loadavg.getString("condition");
+                system.monitor.cpu.loadAVG.timeInterval = loadavg.getInt("time_interval");
+                system.monitor.cpu.loadAVG.pingInterval = loadavg.getLong("ping_interval");
+            }
+        }
+
         if (config.getJSONObject("monitor").has("memory")) {
+            SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Memory Monitor");
             JSONObject memory = config.getJSONObject("monitor").getJSONObject("memory");
             if (memory.has("ping_interval")) {
                 system.monitor.memory.pingInterval = memory.getLong("ping_interval");
@@ -124,18 +134,34 @@ public class Initializer {
             }
         }
 
-        SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Process Monitor");
-        JSONObject process = config.getJSONObject("monitor").getJSONObject("process");
-        JSONArray processAction = config.getJSONObject("monitor").getJSONObject("process").getJSONArray("action");
-        for (int i = 0; i < processAction.length(); i++) {
-            system.monitor.process.action.add(MonitorSystem.ACTION.valueOf(processAction.getString(i).toUpperCase()));
-        }
-        system.monitor.process.name = process.getString("name");
-        system.monitor.process.pid_file = process.getString("pid_file");
-        system.monitor.process.startScript = process.getString("start_script");
-        system.monitor.process.stopScript = process.getString("stop_script");
-        system.monitor.process.pingInterval = process.getLong("ping_interval");
+        if (config.getJSONObject("monitor").has("send_output")) {
+            SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Send Output");
+            JSONObject sendOutput = config.getJSONObject("monitor").getJSONObject("send_output");
+            JSONArray sendOutputAction = sendOutput.getJSONArray("action");
+            for (int i = 0; i < sendOutputAction.length(); i++) {
+                system.monitor.sendOutput.action.add(MonitorSystem.ACTION.valueOf(sendOutputAction.getString(i).toUpperCase()));
+            }
 
+            system.monitor.sendOutput.command = sendOutput.getString("command");
+            system.monitor.sendOutput.pingInterval = sendOutput.getLong("ping_interval");
+        }
+
+        if (config.getJSONObject("monitor").has("process")) {
+            SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Process Monitor");
+            JSONObject process = config.getJSONObject("monitor").getJSONObject("process");
+            JSONArray processAction = process.getJSONArray("action");
+            for (int i = 0; i < processAction.length(); i++) {
+                system.monitor.process.action.add(MonitorSystem.ACTION.valueOf(processAction.getString(i).toUpperCase()));
+            }
+            if(process.has("name")) {
+                system.monitor.process.name = process.getString("name");
+            }
+            system.monitor.process.pid_file = process.getString("pid_file");
+            system.monitor.process.startScript = process.getString("start_script");
+            system.monitor.process.stopScript = process.getString("stop_script");
+            system.monitor.process.pingInterval = process.getLong("ping_interval");
+        }
+        
         SystemMonitor.LOGGER.log(Level.INFO, "Filling Up Command Output Monitor");
         JSONObject output = config.getJSONObject("monitor").getJSONObject("output");
         JSONArray outputAction = config.getJSONObject("monitor").getJSONObject("output").getJSONArray("action");
@@ -192,6 +218,16 @@ public class Initializer {
         if (system.monitor.memory.free.condition != null || system.monitor.memory.used.condition != null) {
             MemoryMonitor memoryMonitor = new MemoryMonitor(execService);
             memoryMonitor.createMemoryThread(system);
+        }
+
+        if (system.monitor.cpu.loadAVG.condition != null) {
+            CPUMonitor cpuMonitor = new CPUMonitor(execService);
+            cpuMonitor.createCPUThread(system);
+        }
+        
+        if(system.monitor.process.name != null) {
+            ProcessMonitor processMonitor = new ProcessMonitor(execService);
+            processMonitor.createProcessMonitorThread(system);
         }
     }
 }

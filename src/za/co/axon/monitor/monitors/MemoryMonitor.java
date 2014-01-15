@@ -11,7 +11,6 @@ import java.util.Date;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jsmpp.InvalidResponseException;
 import org.jsmpp.PDUException;
 import org.jsmpp.bean.Alphabet;
@@ -60,18 +59,36 @@ public class MemoryMonitor {
                                 long conditionValue = Long.parseLong(valuString);
                                 if (command.equals("lt")) {
                                     if (conditionValue > percent) {
-                                        sendMailAlert(system, conditionValue, percent, "free", "below");
-                                        sendSMSAlert(system, conditionValue, percent, "free", "below");
+                                        if (system.monitor.memory.free.action.contains(MonitorSystem.ACTION.ALERT_EMAIL)) {
+                                            sendMailAlert(system, conditionValue, percent, "free", "below");
+                                        } else if (system.monitor.memory.free.action.contains(MonitorSystem.ACTION.ALERT_SMS)) {
+                                            sendSMSAlert(system, conditionValue, percent, "free", "below");
+                                        } else if (system.monitor.memory.free.action.contains(MonitorSystem.ACTION.ALERT_ALL)) {
+                                            sendMailAlert(system, conditionValue, percent, "free", "below");
+                                            sendSMSAlert(system, conditionValue, percent, "free", "below");
+                                        }
                                     }
                                 } else if (command.equals("gt")) {
                                     if (conditionValue < percent) {
-                                        sendMailAlert(system, conditionValue, percent, "free", "above");
-                                        sendSMSAlert(system, conditionValue, percent, "free", "above");
+                                        if (system.monitor.memory.free.action.contains(MonitorSystem.ACTION.ALERT_EMAIL)) {
+                                            sendMailAlert(system, conditionValue, percent, "free", "above");
+                                        } else if (system.monitor.memory.free.action.contains(MonitorSystem.ACTION.ALERT_SMS)) {
+                                            sendSMSAlert(system, conditionValue, percent, "free", "above");
+                                        } else if (system.monitor.memory.free.action.contains(MonitorSystem.ACTION.ALERT_ALL)) {
+                                            sendMailAlert(system, conditionValue, percent, "free", "above");
+                                            sendSMSAlert(system, conditionValue, percent, "free", "above");
+                                        }
                                     }
                                 } else if (command.equals("eq")) {
                                     if (conditionValue == percent) {
-                                        sendMailAlert(system, conditionValue, percent, "free", "equal");
-                                        sendSMSAlert(system, conditionValue, percent, "free", "equal");
+                                        if (system.monitor.memory.free.action.contains(MonitorSystem.ACTION.ALERT_EMAIL)) {
+                                            sendMailAlert(system, conditionValue, percent, "free", "equal");
+                                        } else if (system.monitor.memory.free.action.contains(MonitorSystem.ACTION.ALERT_SMS)) {
+                                            sendSMSAlert(system, conditionValue, percent, "free", "equal");
+                                        } else if (system.monitor.memory.free.action.contains(MonitorSystem.ACTION.ALERT_ALL)) {
+                                            sendMailAlert(system, conditionValue, percent, "free", "equal");
+                                            sendSMSAlert(system, conditionValue, percent, "free", "eqaul");
+                                        }
                                     }
                                 }
                             }
@@ -86,18 +103,36 @@ public class MemoryMonitor {
                                 long conditonValue = Long.parseLong(valuString);
                                 if (command.equals("lt")) {
                                     if (conditonValue > percent) {
-                                        sendMailAlert(system, conditonValue, percent, "used", "below");
-                                        sendSMSAlert(system, conditonValue, percent, "used", "below");
+                                        if (system.monitor.memory.used.action.contains(MonitorSystem.ACTION.ALERT_EMAIL)) {
+                                            sendMailAlert(system, conditonValue, percent, "used", "below");
+                                        } else if (system.monitor.memory.used.action.contains(MonitorSystem.ACTION.ALERT_SMS)) {
+                                            sendSMSAlert(system, conditonValue, percent, "used", "below");
+                                        } else if (system.monitor.memory.used.action.contains(MonitorSystem.ACTION.ALERT_ALL)) {
+                                            sendMailAlert(system, conditonValue, percent, "used", "below");
+                                            sendSMSAlert(system, conditonValue, percent, "used", "below");
+                                        }
                                     }
                                 } else if (command.equals("gt")) {
                                     if (conditonValue < percent) {
-                                        sendMailAlert(system, conditonValue, percent, "used", "above");
-                                        sendSMSAlert(system, conditonValue, percent, "used", "above");
+                                        if (system.monitor.memory.used.action.contains(MonitorSystem.ACTION.ALERT_EMAIL)) {
+                                            sendMailAlert(system, conditonValue, percent, "used", "above");
+                                        } else if (system.monitor.memory.used.action.contains(MonitorSystem.ACTION.ALERT_SMS)) {
+                                            sendSMSAlert(system, conditonValue, percent, "used", "above");
+                                        } else if (system.monitor.memory.used.action.contains(MonitorSystem.ACTION.ALERT_ALL)) {
+                                            sendMailAlert(system, conditonValue, percent, "used", "above");
+                                            sendSMSAlert(system, conditonValue, percent, "used", "above");
+                                        }
                                     }
                                 } else {
                                     if (conditonValue == percent) {
-                                        sendMailAlert(system, conditonValue, percent, "used", "equal");
-                                        sendSMSAlert(system, conditonValue, percent, "used", "equal");
+                                        if (system.monitor.memory.used.action.contains(MonitorSystem.ACTION.ALERT_EMAIL)) {
+                                            sendMailAlert(system, conditonValue, percent, "used", "equal");
+                                        } else if (system.monitor.memory.used.action.contains(MonitorSystem.ACTION.ALERT_SMS)) {
+                                            sendSMSAlert(system, conditonValue, percent, "used", "equal");
+                                        } else if (system.monitor.memory.used.action.contains(MonitorSystem.ACTION.ALERT_ALL)) {
+                                            sendMailAlert(system, conditonValue, percent, "used", "equal");
+                                            sendSMSAlert(system, conditonValue, percent, "used", "equal");
+                                        }
                                     }
                                 }
                             }
@@ -120,12 +155,12 @@ public class MemoryMonitor {
         SystemMonitor.LOGGER.log(Level.INFO, "Sending SMS Alert");
         if (!system.alerts.phoneNumbers.isEmpty()) {
             if (system.smsc.ipAddress != null) {
-                String message = type + " memory is " + conditionalMessage + " " + conditionValue + "%. <br />"
+                String message = type + " memory is " + conditionalMessage + " " + conditionValue + "%."
                         + "Memory is now at " + percent + "%";
                 TimeFormatter timeFormatter = new AbsoluteTimeFormatter();;
 
                 for (String pn : system.alerts.phoneNumbers) {
-                    
+
                     String messageId = system.session.submitShortMessage("CMT",
                             TypeOfNumber.UNKNOWN, NumberingPlanIndicator.UNKNOWN, "Axon-Alert",
                             TypeOfNumber.UNKNOWN, NumberingPlanIndicator.UNKNOWN, pn,
