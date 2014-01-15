@@ -7,6 +7,8 @@ jmonit uses a json file to describe the system and what you want jmonit instance
 
 jmonit currently runs as a single instance. jmonit is not currently distributed.
 
+Sample json config file.
+
 ```javascript
 {
 	"system": {
@@ -23,18 +25,17 @@ jmonit currently runs as a single instance. jmonit is not currently distributed.
 		"mail_server": {
 			"host": "smtp.gmail.com",
 			"user": "akintayo.segun@gmail.com",
-			"password": "20milesfromhome",
+			"password": "********",
 			"port": 587,
 			"starttls": true,
 			"use_auth": true
 		},
 		"smsc": {
-			"la_id": 8201,
-			"sender_id": "Axon-Alert",
-			"ip_address": "10.100.114.131",
-			"system_type": "Axon",
-			"system_id": "Axon",
-			"password": "Ax@12",
+			"sender_id": "JMonit-Alert",
+			"ip_address": "10.100.126.111",
+			"system_type": "jmonit",
+			"system_id": "jmonit",
+			"password": "******",
 			"port": 5217
 		},
 		"monitor": {
