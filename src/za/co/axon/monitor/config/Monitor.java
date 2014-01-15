@@ -15,4 +15,5 @@ public class Monitor {
     public Output output = new Output();
     public Port port = new Port();
     public Web web = new Web();
+    public SendOutput sendOutput = new SendOutput();
 }

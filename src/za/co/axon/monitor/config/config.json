@@ -3,14 +3,11 @@
         "system_name": "GLOWebServer",
         "ip_address": "192.168.1.1",        
         "alerts": {
-            "mail": [
-            "akintayo.segun.gmail.com",
-            "segun@ratendate.com"
-            ],
+            "mail":[],
             "sms": [
-            "+2348089370313",
-            "+2347062022486",
-            "+2348032517996"
+            "2348089370313",
+            "2347062022486",
+            "2348032517996"
             ]
         },
         "mail_server": {
@@ -32,16 +29,9 @@
         },
         "monitor": {
             "memory": {  
-                "ping_interval": 1000,
+                "ping_interval": 60000,
                 "free": {                    
                     "condition": "lt 10%",
-                    "action": [
-                    "alert_email",
-                    "alert_sms"
-                    ]
-                },
-                "used": {
-                    "condition": "gt 10%",
                     "action": [
                     "alert_email",
                     "alert_sms"
@@ -50,7 +40,8 @@
             },
             "cpu": {                
                 "load_avg": {
-                    "ping_interval": 1000,
+                    "ping_interval": 60000,
+                    "time_interval": 5,
                     "condition": "gt 3",
                     "action": [
                     "alert_all"
@@ -58,11 +49,11 @@
                 }
             },
             "process": {
-                "ping_interval": 1000,
+                "ping_interval": 60000,
                 "name": "mysqld",
                 "pid_file": "/var/run/mysqld/mysqld.pid",
-                "start_script": "/data/etc/rc.d/my.64001start",
-                "stop_script": "/data/etc/rc.d/my.64001stop",
+                "start_script": "/data/etc/rc.d/my.64001 start",
+                "stop_script": "/data/etc/rc.d/my.64001 stop",
                 "action": [
                 "alert_all",
                 "restart"
@@ -88,6 +79,13 @@
                 "url": "http: //localhost/pau",
                 "action": [
                 "alert_all"
+                ]
+            },
+            "send_output": {
+                "ping_interval": 60000,
+                "command": "ls -las",
+                "action": [
+                    "alert_sms"
                 ]
             }
         }
